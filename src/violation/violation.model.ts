@@ -30,7 +30,4 @@ export class Violation {
 
     @Column({default: new Date().toDateString()})
     created_at: string;
-
-    Violation() {
-    }
 }

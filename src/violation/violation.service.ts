@@ -1,148 +1,329 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Violation } from './violation.model';
-import { Repository } from 'typeorm';
+import { DataSource, Repository, Transaction } from 'typeorm';
 import { StatusQuo } from './violation.model';
 import { ViolationDto } from '../dto/ViolationDto';
 
 @Injectable()
 export class ViolationService {
-    constructor(@InjectRepository(Violation) private readonly violationRepository: Repository<Violation>) { }
+  constructor(
+    @InjectRepository(Violation)
+    private dataSource: DataSource,
+  ) {}
 
-    async retrieveAllViolation(): Promise<Violation[]> {
-        return await this.violationRepository.find();
+  async retrieveAllViolation(): Promise<Violation[]> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const violation = await queryRunner.manager.find(Violation);
+      await queryRunner.commitTransaction();
+      return violation;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
     }
+  }
 
-    async retrieveViolationById(vio_id: string): Promise<Violation> {
-        return await this.violationRepository.findOne({
-            where: {
-                vio_id: vio_id
-            }
-        });
+  async retrieveViolationById(vio_id: string): Promise<Violation> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const violation = await queryRunner.manager.findOne(Violation, {
+        where: {
+          vio_id: vio_id,
+        },
+      });
+      await queryRunner.commitTransaction();
+      return violation;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
     }
+  }
 
-    async retrieveViolationByQuizId(quiz_id: string): Promise<Violation[]> {
-        return await this.violationRepository.find({
-            where: {
-                quiz_id: quiz_id
-            }
-        });
+  async retrieveViolationByQuizId(quiz_id: string): Promise<Violation[]> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const violation = await queryRunner.manager.find(Violation, {
+        where: {
+          quiz_id: quiz_id,
+        },
+      });
+      await queryRunner.commitTransaction();
+      return violation;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
     }
+  }
 
-    async retrieveViolationByAuthId(auth_id: string): Promise<Violation[]> {
-        return await this.violationRepository.find({
-            where: {
-                auth_id: auth_id
-            }
-        });
+  async retrieveViolationByAuthId(auth_id: string): Promise<Violation[]> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const violation = await queryRunner.manager.find(Violation, {
+        where: {
+          auth_id: auth_id,
+        },
+      });
+      await queryRunner.commitTransaction();
+      return violation;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
     }
+  }
 
-    async retrieveViolationByReportBy(report_by: string): Promise<Violation[]> {
-        return await this.violationRepository.find({
-            where: {
-                report_by: report_by
-            }
-        });
+  async retrieveViolationByReportBy(report_by: string): Promise<Violation[]> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const violation = await queryRunner.manager.find(Violation, {
+        where: {
+          report_by: report_by,
+        },
+      });
+      await queryRunner.commitTransaction();
+      return violation;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
     }
+  }
 
-    async createViolation(vioDto: ViolationDto): Promise<Violation> {
-        const violation = new Violation();
-        violation.quiz_id = vioDto.quiz_id;
-        violation.auth_id = vioDto.auth_id;
-        violation.report_by = vioDto.report_by;
-        violation.detail = vioDto.detail;
-        violation.status = StatusQuo.PENDING;
-        return await this.violationRepository.save(violation);
+  async createViolation(vioDto: ViolationDto): Promise<Violation> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const violation = new Violation();
+      violation.quiz_id = vioDto.quiz_id;
+      violation.auth_id = vioDto.auth_id;
+      violation.report_by = vioDto.report_by;
+      violation.detail = vioDto.detail;
+      violation.status = StatusQuo.PENDING;
+      await queryRunner.manager.save(violation);
+      await queryRunner.commitTransaction();
+      return violation;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
     }
+  }
 
-    async solveViolation(vio_id: string): Promise<Violation> {
-        const violation = await this.violationRepository.findOne({
-            where: {
-                vio_id: vio_id,
-            }
-        });
-        violation.status = StatusQuo.SOLVED;
-        return await this.violationRepository.save(violation);
+  async solveViolation(vio_id: string): Promise<Violation> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const violation = await queryRunner.manager.findOne(Violation, {
+        where: {
+          vio_id: vio_id,
+        },
+      });
+      violation.status = StatusQuo.SOLVED;
+      await queryRunner.manager.save(violation);
+      await queryRunner.commitTransaction();
+      return violation;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
     }
+  }
 
-    async rejectViolation(vio_id: string): Promise<Violation> {
-        const violation = await this.violationRepository.findOne({
-            where: {
-                vio_id: vio_id,
-            }
-        });
-        violation.status = StatusQuo.REJECTED;
-        return await this.violationRepository.save(violation);
+  async rejectViolation(vio_id: string): Promise<Violation> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const violation = await queryRunner.manager.findOne(Violation, {
+        where: {
+          vio_id: vio_id,
+        },
+      });
+      violation.status = StatusQuo.REJECTED;
+      await queryRunner.manager.save(violation);
+      await queryRunner.commitTransaction();
+      return violation;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
     }
+  }
 
-    async appealViolation(vio_id: string): Promise<Violation> {
-        const violation = await this.violationRepository.findOne({
-            where: {
-                vio_id: vio_id,
-            }
-        });
-        violation.status = StatusQuo.APPEALING;
-        return await this.violationRepository.save(violation);
+  async appealViolation(vio_id: string): Promise<Violation> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const violation = await queryRunner.manager.findOne(Violation, {
+        where: {
+          vio_id: vio_id,
+        },
+      });
+      violation.status = StatusQuo.APPEALING;
+      await queryRunner.manager.save(violation);
+      await queryRunner.commitTransaction();
+      return violation;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
     }
+  }
 
-    async deleteViolation(vio_id: string): Promise<Violation> {
-        const violation = await this.violationRepository.findOne({
-            where: {
-                vio_id: vio_id
-            }
-        });
-        return await this.violationRepository.remove(violation);
+  async deleteViolation(vio_id: string): Promise<Violation> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const violation = await queryRunner.manager.findOne(Violation, {
+        where: {
+          vio_id: vio_id,
+        },
+      });
+      await queryRunner.manager.remove(violation);
+      await queryRunner.commitTransaction();
+      return violation;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
     }
+  }
 
-    async deleteViolationByQuizId(quiz_id: string): Promise<Violation[]> {
-        const violation = await this.violationRepository.find({
-            where: {
-                quiz_id: quiz_id
-            }
-        });
-        return await this.violationRepository.remove(violation);
+  async deleteViolationByQuizId(quiz_id: string): Promise<Violation[]> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const violation = await queryRunner.manager.find(Violation, {
+        where: {
+          quiz_id: quiz_id,
+        },
+      });
+      await queryRunner.manager.remove(violation);
+      await queryRunner.commitTransaction();
+      return violation;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
     }
+  }
 
-    async deleteViolationByAuthId(auth_id: string): Promise<Violation[]> {
-        const violation = await this.violationRepository.find({
-            where: {
-                auth_id: auth_id
-            }
-        });
-        return await this.violationRepository.remove(violation);
+  async deleteViolationByAuthId(auth_id: string): Promise<Violation[]> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const violation = await queryRunner.manager.find(Violation, {
+        where: {
+          auth_id: auth_id,
+        },
+      });
+      await queryRunner.manager.remove(violation);
+      await queryRunner.commitTransaction();
+      return violation;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
     }
-    
-    async deleteViolationByReporter(report_by: string): Promise<Violation[]> {
-        const violation = await this.violationRepository.find({
-            where: {
-                report_by: report_by
-            }
-        });
-        return await this.violationRepository.remove(violation);
-    }
+  }
 
-    async deleteAllViolation(): Promise<Violation[]> {
-        const violation = await this.violationRepository.find();
-        return await this.violationRepository.remove(violation);
+  async deleteViolationByReporter(report_by: string): Promise<Violation[]> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const violation = await queryRunner.manager.find(Violation, {
+        where: {
+          report_by: report_by,
+        },
+      });
+      await queryRunner.manager.remove(violation);
+      await queryRunner.commitTransaction();
+      return violation;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
     }
+  }
 
-    async updateStatus(vio_id: string, status: StatusQuo): Promise<Violation> {
-        const violation = await this.violationRepository.findOne({
-            where: {
-                vio_id: vio_id
-            }
-        });
-        violation.status = status;
-        return await this.violationRepository.save(violation);
+  async deleteAllViolation(): Promise<Violation[]> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const violation = await queryRunner.manager.find(Violation);
+      await queryRunner.manager.remove(violation);
+      await queryRunner.commitTransaction();
+      return violation;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
     }
+  }
 
-    async deleteAllViolationByStatus(status: string): Promise<Violation[]> {
+  async updateStatus(vio_id: string, status: StatusQuo): Promise<Violation> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const violation = await queryRunner.manager.findOne(Violation, {
+        where: {
+          vio_id: vio_id,
+        },
+      });
+      violation.status = status;
+      await queryRunner.manager.save(violation);
+      await queryRunner.commitTransaction();
+      return violation;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async deleteAllViolationByStatus(status: string): Promise<Violation[]> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
         const status_q = StatusQuo[status];
-        const violation = await this.violationRepository.find({
+        const violation = await queryRunner.manager.find(Violation, {
             where: {
-                status: status_q
-            }
+            status: status_q,
+            },
         });
-        return await this.violationRepository.remove(violation);
+        await queryRunner.manager.remove(violation);
+        await queryRunner.commitTransaction();
+        return violation;
     }
+    catch (err) {
+        await queryRunner.rollbackTransaction();
+    }
+    finally {
+        await queryRunner.release();
+    }
+  }
 }
