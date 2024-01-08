@@ -7,6 +7,6 @@ import { Violation } from './violation.model';
 @Module({
   imports: [TypeOrmModule.forFeature([Violation])],
   controllers: [ViolationController],
-  providers: [ViolationService]
+  providers: [ViolationService],
 })
 export class ViolationModule {}

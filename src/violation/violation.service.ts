@@ -309,21 +309,19 @@ export class ViolationService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-        const status_q = StatusQuo[status];
-        const violation = await queryRunner.manager.find(Violation, {
-            where: {
-            status: status_q,
-            },
-        });
-        await queryRunner.manager.remove(violation);
-        await queryRunner.commitTransaction();
-        return violation;
-    }
-    catch (err) {
-        await queryRunner.rollbackTransaction();
-    }
-    finally {
-        await queryRunner.release();
+      const status_q = StatusQuo[status];
+      const violation = await queryRunner.manager.find(Violation, {
+        where: {
+          status: status_q,
+        },
+      });
+      await queryRunner.manager.remove(violation);
+      await queryRunner.commitTransaction();
+      return violation;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
     }
   }
 }
