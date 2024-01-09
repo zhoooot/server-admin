@@ -7,7 +7,6 @@ import {
   Param,
   Patch,
   Post,
-  RequestMapping,
 } from '@nestjs/common';
 import { ViolationService } from './violation.service';
 import { ViolationDto } from '../dto/ViolationDto';
@@ -19,9 +18,19 @@ export class ViolationController {
     private readonly violationService: ViolationService,
   ) {}
 
-  @Get('/')
+  @Get('/all')
   async retrieveAllViolation() {
     return await this.violationService.retrieveAllViolation();
+  }
+
+  @Get('/check/:quiz_id')
+  async checkViolation(@Param('quiz_id') quiz_id: string) {
+    return await this.violationService.checkViolation(quiz_id);
+  }
+
+  @Get('/status/:status')
+  async retrieveAllViolationByStatus(@Param('status') status: string) {
+    return await this.violationService.retrieveAllViolationByStatus(status);
   }
 
   @Get('/:vio_id')
@@ -54,9 +63,9 @@ export class ViolationController {
     return await this.violationService.solveViolation(vio_id);
   }
 
-  @Patch('/reject/:vio_id')
-  async rejectViolation(@Param('vio_id') vio_id: string) {
-    return await this.violationService.rejectViolation(vio_id);
+  @Patch('/reject/:quiz_id')
+  async rejectViolation(@Param('quiz_id') quiz_id: string) {
+    return await this.violationService.rejectViolation(quiz_id);
   }
 
   @Patch('/appeal/:vio_id')

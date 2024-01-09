@@ -1,16 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable, Logger } from '@nestjs/common';
 import { Violation } from './violation.model';
-import { DataSource, Repository, Transaction } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { StatusQuo } from './violation.model';
 import { ViolationDto } from '../dto/ViolationDto';
 
 @Injectable()
 export class ViolationService {
-  constructor(
-    @InjectRepository(Violation)
-    private dataSource: DataSource,
-  ) {}
+  constructor(private dataSource: DataSource) {}
 
   async retrieveAllViolation(): Promise<Violation[]> {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -21,6 +17,27 @@ export class ViolationService {
       await queryRunner.commitTransaction();
       return violation;
     } catch (err) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async retrieveAllViolationByStatus(status: string): Promise<Violation[]> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const status_q = StatusQuo[status];
+      const violation = await queryRunner.manager.find(Violation, {
+        where: {
+          status: status_q,
+        },
+      });
+      await queryRunner.commitTransaction();
+      return violation;
+    } catch (err) {
+      Logger.log(err);
       await queryRunner.rollbackTransaction();
     } finally {
       await queryRunner.release();
@@ -118,6 +135,7 @@ export class ViolationService {
       await queryRunner.commitTransaction();
       return violation;
     } catch (err) {
+      Logger.log(err);
       await queryRunner.rollbackTransaction();
     } finally {
       await queryRunner.release();
@@ -145,18 +163,20 @@ export class ViolationService {
     }
   }
 
-  async rejectViolation(vio_id: string): Promise<Violation> {
+  async rejectViolation(quiz_id: string): Promise<Violation[]> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      const violation = await queryRunner.manager.findOne(Violation, {
+      const violation: Violation[] = await queryRunner.manager.find(Violation, {
         where: {
-          vio_id: vio_id,
+          quiz_id: quiz_id,
         },
       });
-      violation.status = StatusQuo.REJECTED;
-      await queryRunner.manager.save(violation);
+      for (let i = 0; i < violation.length; i++) {
+        violation[i].status = StatusQuo.REJECTED;
+        await queryRunner.manager.save(violation[i]);
+      }
       await queryRunner.commitTransaction();
       return violation;
     } catch (err) {
@@ -318,6 +338,30 @@ export class ViolationService {
       await queryRunner.manager.remove(violation);
       await queryRunner.commitTransaction();
       return violation;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async checkViolation(quiz_id: string) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const violated = await queryRunner.manager.exists(Violation, {
+        where: {
+          quiz_id: quiz_id,
+          status: StatusQuo.REJECTED,
+        },
+      });
+      await queryRunner.commitTransaction();
+      if (violated) {
+        return true;
+      } else {
+        return false;
+      }
     } catch (err) {
       await queryRunner.rollbackTransaction();
     } finally {

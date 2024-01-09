@@ -6,7 +6,8 @@ export const typeOrmConfig: DataSourceOptions = {
   type: 'postgres',
   url: process.env.DATABASE_URL,
   entities: [Violation],
-  migrations: ['dist/migrations/*.js'],
+  //migrations: ['dist/migrations/*.js'],
+  synchronize: true,
   extra: {
     ssl: {
       rejectUnauthorized: false,
